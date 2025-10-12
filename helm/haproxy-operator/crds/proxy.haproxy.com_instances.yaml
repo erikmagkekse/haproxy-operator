@@ -1026,6 +1026,11 @@ spec:
                         - NodePort
                         - LoadBalancer
                         type: string
+                      loadBalancerIP:
+                        default: ""
+                        description: LoadBalancerIP optionally sets the requested
+                          load balancer IP when the service type is LoadBalancer.
+                        type: string
                     required:
                     - enabled
                     type: object

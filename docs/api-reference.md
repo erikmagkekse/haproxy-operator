@@ -1549,6 +1549,6 @@ _Appears in:_
 | --- | --- | --- | --- |
 | `enabled` _boolean_ | Enabled will toggle the creation of a Service. |  |  |
 | `type` _[ServiceType](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.32/#servicetype-v1-core)_ | Type will define the Service Type. | ClusterIP | Enum: [ClusterIP NodePort LoadBalancer] <br /> |
+| `loadBalancerIP` _string_ | LoadBalancerIP optionally sets the requested load balancer IP when the service type is LoadBalancer. | `""` |  |
 | `annotations` _object (keys:string, values:string)_ | Annotations to be added to Service. |  |  |
-
 

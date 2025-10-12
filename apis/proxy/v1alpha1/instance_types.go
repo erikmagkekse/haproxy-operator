@@ -130,6 +130,10 @@ type ServiceSpec struct {
 	// +kubebuilder:validation:Enum=ClusterIP;NodePort;LoadBalancer
 	// +kubebuilder:default=ClusterIP
 	Type *corev1.ServiceType `json:"type,omitempty"`
+	// LoadBalancerIP optionally sets the requested load balancer IP when the service type is LoadBalancer.
+	// +optional
+	// +kubebuilder:default=""
+	LoadBalancerIP string `json:"loadBalancerIP,omitempty"`
 	// Annotations to be added to Service.
 	// +optional
 	// +nullable

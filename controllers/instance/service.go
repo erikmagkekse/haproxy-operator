@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sort"
+	"strings"
 
 	configv1alpha1 "github.com/six-group/haproxy-operator/apis/config/v1alpha1"
 	proxyv1alpha1 "github.com/six-group/haproxy-operator/apis/proxy/v1alpha1"
@@ -33,6 +34,12 @@ func (r *Reconciler) reconcileService(ctx context.Context, instance *proxyv1alph
 
 		if serviceType := instance.Spec.Network.Service.Type; serviceType != nil {
 			service.Spec.Type = *serviceType
+		}
+
+		if lbIP := strings.TrimSpace(instance.Spec.Network.Service.LoadBalancerIP); lbIP != "" {
+			service.Spec.LoadBalancerIP = lbIP
+		} else {
+			service.Spec.LoadBalancerIP = ""
 		}
 
 		service.Labels = utils.GetAppSelectorLabels(instance)
