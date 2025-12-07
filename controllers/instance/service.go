@@ -33,14 +33,68 @@ func (r *Reconciler) reconcileService(ctx context.Context, instance *proxyv1alph
 			return err
 		}
 
-		if serviceType := instance.Spec.Network.Service.Type; serviceType != nil {
-			service.Spec.Type = *serviceType
+		svcSpec := instance.Spec.Network.Service
+
+		// Type
+		if svcSpec.Type != nil {
+			service.Spec.Type = *svcSpec.Type
 		}
 
+		// Labels - merge app selector labels with custom labels
 		service.Labels = utils.GetAppSelectorLabels(instance)
+		for k, v := range svcSpec.Labels {
+			service.Labels[k] = v
+		}
 
-		if instance.Spec.Network.Service.Annotations != nil {
-			service.Annotations = instance.Spec.Network.Service.Annotations
+		// Annotations
+		if svcSpec.Annotations != nil {
+			service.Annotations = svcSpec.Annotations
+		}
+
+		// ClusterIP
+		if svcSpec.ClusterIP != "" {
+			service.Spec.ClusterIP = svcSpec.ClusterIP
+		}
+
+		// LoadBalancer configuration
+		if svcSpec.LoadBalancerIP != "" {
+			service.Spec.LoadBalancerIP = svcSpec.LoadBalancerIP
+		}
+		if svcSpec.LoadBalancerClass != nil {
+			service.Spec.LoadBalancerClass = svcSpec.LoadBalancerClass
+		}
+		if len(svcSpec.LoadBalancerSourceRanges) > 0 {
+			service.Spec.LoadBalancerSourceRanges = svcSpec.LoadBalancerSourceRanges
+		}
+		if svcSpec.AllocateLoadBalancerNodePorts != nil {
+			service.Spec.AllocateLoadBalancerNodePorts = svcSpec.AllocateLoadBalancerNodePorts
+		}
+
+		// Traffic Policies
+		if svcSpec.ExternalTrafficPolicy != "" {
+			service.Spec.ExternalTrafficPolicy = svcSpec.ExternalTrafficPolicy
+		}
+		if svcSpec.InternalTrafficPolicy != nil {
+			service.Spec.InternalTrafficPolicy = svcSpec.InternalTrafficPolicy
+		}
+		if svcSpec.HealthCheckNodePort > 0 {
+			service.Spec.HealthCheckNodePort = svcSpec.HealthCheckNodePort
+		}
+
+		// Session Affinity
+		if svcSpec.SessionAffinity != "" {
+			service.Spec.SessionAffinity = svcSpec.SessionAffinity
+		}
+		if svcSpec.SessionAffinityConfig != nil {
+			service.Spec.SessionAffinityConfig = svcSpec.SessionAffinityConfig
+		}
+
+		// IP Families (Dual-Stack)
+		if svcSpec.IPFamilyPolicy != nil {
+			service.Spec.IPFamilyPolicy = svcSpec.IPFamilyPolicy
+		}
+		if len(svcSpec.IPFamilies) > 0 {
+			service.Spec.IPFamilies = svcSpec.IPFamilies
 		}
 
 		if len(instance.Spec.Network.HostIPs) == 0 {
@@ -88,6 +142,11 @@ func (r *Reconciler) reconcileService(ctx context.Context, instance *proxyv1alph
 		}
 
 		service.Spec.Ports = removeDuplicatesByPort(service.Spec.Ports)
+
+		// Apply NodePorts if specified
+		if len(svcSpec.NodePorts) > 0 {
+			applyNodePorts(service, svcSpec.NodePorts)
+		}
 
 		sort.Slice(service.Spec.Ports, func(i, j int) bool {
 			return service.Spec.Ports[i].Name < service.Spec.Ports[j].Name
@@ -184,4 +243,17 @@ func detectIPType(address string) discoveryv1.AddressType {
 		return discoveryv1.AddressTypeIPv4
 	}
 	return discoveryv1.AddressTypeIPv6
+}
+
+func applyNodePorts(service *corev1.Service, nodePorts []proxyv1alpha1.NodePortSpec) {
+	nodePortMap := make(map[string]int32)
+	for _, np := range nodePorts {
+		nodePortMap[np.Name] = np.NodePort
+	}
+
+	for i, port := range service.Spec.Ports {
+		if nodePort, ok := nodePortMap[port.Name]; ok {
+			service.Spec.Ports[i].NodePort = nodePort
+		}
+	}
 }
