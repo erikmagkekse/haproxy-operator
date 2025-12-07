@@ -46,9 +46,12 @@ func (r *Reconciler) reconcileService(ctx context.Context, instance *proxyv1alph
 			service.Labels[k] = v
 		}
 
-		// Annotations
-		if svcSpec.Annotations != nil {
-			service.Annotations = svcSpec.Annotations
+		// Annotations - merge instead of overwrite to preserve annotations set by other controllers (e.g. kube-vip)
+		if service.Annotations == nil {
+			service.Annotations = make(map[string]string)
+		}
+		for k, v := range svcSpec.Annotations {
+			service.Annotations[k] = v
 		}
 
 		// ClusterIP
