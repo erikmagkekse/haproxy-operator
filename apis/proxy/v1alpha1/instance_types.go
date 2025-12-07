@@ -134,6 +134,94 @@ type ServiceSpec struct {
 	// +optional
 	// +nullable
 	Annotations map[string]string `json:"annotations,omitempty"`
+	// Labels are additional labels to add to the Service.
+	// +optional
+	// +nullable
+	Labels map[string]string `json:"labels,omitempty"`
+
+	// === ClusterIP Configuration ===
+
+	// ClusterIP is the IP address of the service and is usually assigned
+	// randomly. If specified, it will be allocated to the service if unused.
+	// Set to "None" for headless services.
+	// +optional
+	ClusterIP string `json:"clusterIP,omitempty"`
+
+	// === LoadBalancer Configuration ===
+
+	// LoadBalancerIP is the IP address of the load balancer.
+	// Only applies when Type is LoadBalancer.
+	// Deprecated: This field was under-specified and its meaning varies across implementations.
+	// Using it is non-portable and it may not support dual-stack.
+	// +optional
+	LoadBalancerIP string `json:"loadBalancerIP,omitempty"`
+	// LoadBalancerClass is the class of the load balancer implementation.
+	// If specified, the value of this field must be a label-style identifier.
+	// +optional
+	LoadBalancerClass *string `json:"loadBalancerClass,omitempty"`
+	// LoadBalancerSourceRanges restricts traffic through the load-balancer
+	// to the specified client IPs. Only applies when Type is LoadBalancer.
+	// +optional
+	LoadBalancerSourceRanges []string `json:"loadBalancerSourceRanges,omitempty"`
+	// AllocateLoadBalancerNodePorts defines if NodePorts will be automatically
+	// allocated for LoadBalancer services. Default is true.
+	// +optional
+	AllocateLoadBalancerNodePorts *bool `json:"allocateLoadBalancerNodePorts,omitempty"`
+
+	// === Traffic Policies ===
+
+	// ExternalTrafficPolicy denotes if this Service desires to route external
+	// traffic to node-local or cluster-wide endpoints. Defaults to "Cluster".
+	// +kubebuilder:validation:Enum=Local;Cluster
+	// +optional
+	ExternalTrafficPolicy corev1.ServiceExternalTrafficPolicy `json:"externalTrafficPolicy,omitempty"`
+	// InternalTrafficPolicy specifies if the cluster internal traffic should
+	// be routed to all endpoints or node-local endpoints only. Defaults to "Cluster".
+	// +kubebuilder:validation:Enum=Local;Cluster
+	// +optional
+	InternalTrafficPolicy *corev1.ServiceInternalTrafficPolicy `json:"internalTrafficPolicy,omitempty"`
+	// HealthCheckNodePort specifies the healthcheck nodePort for the service.
+	// Only applies when Type is LoadBalancer and ExternalTrafficPolicy is Local.
+	// +optional
+	HealthCheckNodePort int32 `json:"healthCheckNodePort,omitempty"`
+
+	// === Session Affinity ===
+
+	// SessionAffinity defines the session affinity type. Defaults to None.
+	// +kubebuilder:validation:Enum=None;ClientIP
+	// +optional
+	SessionAffinity corev1.ServiceAffinity `json:"sessionAffinity,omitempty"`
+	// SessionAffinityConfig contains the configurations of session affinity.
+	// +optional
+	SessionAffinityConfig *corev1.SessionAffinityConfig `json:"sessionAffinityConfig,omitempty"`
+
+	// === NodePort Configuration ===
+
+	// NodePorts defines specific node ports for service ports.
+	// +optional
+	NodePorts []NodePortSpec `json:"nodePorts,omitempty"`
+
+	// === Dual-Stack / IP Family ===
+
+	// IPFamilyPolicy represents the dual-stack-ness requested or required by this Service.
+	// +kubebuilder:validation:Enum=SingleStack;PreferDualStack;RequireDualStack
+	// +optional
+	IPFamilyPolicy *corev1.IPFamilyPolicy `json:"ipFamilyPolicy,omitempty"`
+	// IPFamilies is a list of IP families assigned to this service.
+	// +optional
+	IPFamilies []corev1.IPFamily `json:"ipFamilies,omitempty"`
+}
+
+// NodePortSpec defines a specific NodePort for a named service port.
+type NodePortSpec struct {
+	// Name is the name of the port (must match a port name in the Frontend binds).
+	Name string `json:"name"`
+	// Port is the port number on the service.
+	Port int32 `json:"port"`
+	// NodePort is the port number on each node.
+	// +kubebuilder:validation:Minimum=30000
+	// +kubebuilder:validation:Maximum=32767
+	NodePort int32 `json:"nodePort"`
 }
 
 type Metrics struct {
